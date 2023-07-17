@@ -1,1 +1,274 @@
+#include <iostream>
+using namespace std;
+int main()
+{
+    int choice = 0, quantity = 0, total_bill = 0;
+    bool keep_ordering = true;
 
+    int topleft = 218;          //everytime i cout topleft it will print the symbol with ascii code 218
+    int bottomleft = 192;
+    int topright = 191;
+    int bottomright = 217;
+    int normalbar = 196;
+    int doublehorizontal = 186;
+    int horizontalline = 179;
+
+    char TL = topleft;           //everytime i cout TL it will print the symbol with ascii code 218
+    char BL = bottomleft;        
+    char TR = topright;
+    char BR = bottomright;
+    char NB = normalbar;
+    char DH = doublehorizontal;
+    char HL = horizontalline;
+
+    // change menu item names here
+    // VvVvVvVvVvVvVvVvVvVvVvVvVvV
+
+    string item1 = "Biryani";
+    string item2 = "Sandwich";
+    string item3 = "Brownie";
+    string item4 = "Chicken Roll";
+    string item5 = "Chai";
+
+    // change menu item prices here
+    // VvVvVvVvVvVvVvVvVvVvVvVvVvVvV
+    int price1 = 200;
+    int price2 = 120;
+    int price3 = 250;
+    int price4 = 170;
+    int price5 = 50;
+
+    while (keep_ordering)
+    {
+        //---------------------------INTERFACE STARTS HERE--------------------------------------------
+ //horizontal top bar
+        cout << "   " << TL;
+        for (int i = 0; i < 35; ++i) { cout << NB; }
+        cout << TR << "   " << endl;
+        //end of top bar
+        cout << "   " << HL << " " << HL << "    PLEASE SELECT AN OPTION    " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "      AND THEN PRESS ENTER     " << HL << " " << HL << "   " << endl;
+        //horizontal bottom bar
+        cout << "   " << BL;
+        for (int i = 0; i < 35; ++i) { cout << NB; }
+        cout << BR << "   " << endl;
+        //end of bottom bar
+        cout << endl;
+        //horizontal top bar
+        cout << "   " << TL;
+        for (int i = 0; i < 35; ++i) { cout << NB; }
+        cout << TR << "   " << endl;
+        //end of top bar
+        cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "        MR. DEAN'S CAFE        " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "    1 >> ADD ITEM              " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "    2 >> REMOVE ITEM           " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "    3 >> APPLY DISCOUNT        " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL << "    0 >> COMPLETE ORDER        " << HL << " " << HL << "   " << endl;
+        cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+        //horizontal bottom bar
+        cout << "   " << BL;
+        for (int i = 0; i < 35; ++i) { cout << NB; }
+        cout << BR << "   " << endl;
+        //end of bottom bar
+        cout << endl << endl;
+        //---------------------------INTERFACE ENDS HERE--------------------------------------------
+
+
+        cin >> choice;
+        cout << endl;
+
+        switch (choice)
+        {
+            // add item
+        case 1:
+            do
+            {
+
+                //---------------------------INTERFACE STARTS HERE--------------------------------------------
+                //horizontal top bar
+                cout << "   " << TL;
+                for (int i = 0; i < 35; ++i) { cout << NB; }
+                cout << TR << "   " << endl;
+                //end of top bar
+                cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "            ::MENU::           " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    1. " << item1 << " " << price1 << " /-          " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    2. " << item2 << " " << price2 << " /-         " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    3. " << item3 << " " << price3 << " /-          " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    4. " << item4 << " " << price4 << " /-     " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    5. " << item5 << " " << price5 << " /-              " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL << "    0. Exit                    " << HL << " " << HL << "   " << endl;
+                cout << "   " << HL << " " << HL; for (int i = 0; i < 31; ++i) { cout << NB; } cout << HL << " " << HL << "   " << endl;
+                //horizontal bottom bar
+                cout << "   " << BL;
+                for (int i = 0; i < 35; ++i) { cout << NB; }
+                cout << BR << "   " << endl;
+                //end of bottom bar
+                cout << endl << endl;
+                //---------------------------INTERFACE ENDS HERE--------------------------------------------
+
+                cin >> choice;
+
+                switch (choice)
+                {
+                    // how many items
+                case 1:
+                    cout << "How many plates of " << item1 << " (" << price1 << "/- per plate) you want? ";
+                    cin >> quantity;
+                    break;
+                case 2:
+                    cout << "How many plates of " << item2 << " (" << price2 << "/- per plate) you want? ";
+                    cin >> quantity;
+                    break;
+                case 3:
+                    cout << "How many plates of " << item3 << " (" << price3 << "/- per plate) you want? ";
+                    cin >> quantity;
+                    break;
+                case 4:
+                    cout << "How many plates of " << item4 << " (" << price4 << "/- per plate) you want? ";
+                    cin >> quantity;
+                    break;
+                case 5:
+                    cout << "How many plates of " << item5 << " (" << price5 << "/- per plate) you want? ";
+                    cin >> quantity;
+                    break;
+
+                case 0:
+                    cout << "Returning to the starting menu.\n\n";
+                    break;
+
+                default:
+                    cout << "Invalid choice, please try again.\n";
+                    continue;
+                }
+
+                if (choice != 0) {
+                    int cost = 0;
+                    switch (choice)
+                    {
+                    case 1:
+                        cost = quantity * price1;
+                        break;
+
+                    case 2:
+                        cost = quantity * price2;
+                        break;
+
+                    case 3:
+                        cost = quantity * price3;
+                        break;
+
+                    case 4:
+                        cost = quantity * price4;
+                        break;
+
+                    case 5:
+                        cost = quantity * price5;
+                        break;
+                    }
+
+                    total_bill += cost;
+                    //interface
+                    cout << "Your total bill for this order is " << cost << "/-\n\n";
+                }
+                else {
+                    break; // exit the inner loop and go back to the starting menu
+                }
+            } while (true);
+
+            break;
+
+        case 2:
+            // interface for remove item
+            cout << "Remove Item functionality is currently not available." << endl;
+            cout << "Please choose another option." << endl << endl;
+            // backend for remove item
+            break;
+
+        case 3:
+
+        {
+            string discounts[3] = { "quaid123","sirSyed","mufaid" };
+            bool is_code_valid = false;
+            string discount;
+            cout << "Please Enter a Discount Code or Press 0 to go back" << endl;
+            cin >> discount;
+            if (discount == "0")
+            {
+                break;
+            }
+
+            for (int i = 0; i <= 2; i++)
+            {
+                if (discount == discounts[i])
+                {
+                    is_code_valid = true;
+                    break;
+                }
+            }
+
+            if (is_code_valid)
+            {
+                cout << "Your cost is now 20% less";
+                int temp = total_bill;
+                total_bill = total_bill - total_bill * 20 / 100;
+                cout << endl << "Original bill =======>" << temp;
+                cout << endl << "Bill after discount =>" << total_bill << endl;
+            }
+            else
+            {
+                cout << "Invalid code";
+            }
+
+
+
+
+        }
+
+
+
+        /* //discount module interface
+        cout << "Enter discount code: ";
+        int discount_code;
+        cin >> discount_code;
+        cout << endl;
+
+        if (discount_code == 123)
+        {
+            total_bill -= 30;
+            //discount module interface
+            cout << "Discount applied successfully." << endl;
+        }
+        else
+        {
+            //discount module interface
+            cout << "Invalid discount code." << endl;
+        }
+        break;
+        */
+
+        case 0:
+            //interface
+            cout << endl << "Your total bill is Rs. " << total_bill << "/- Thank you for visiting our cafe." << endl;
+            keep_ordering = false;
+            break;
+
+        default:
+            //interface
+            cout << "Invalid choice. Please try again." << endl;
+            break;
+        }
+
+        if (keep_ordering)
+        {
+            //interface
+            cout << endl << "Your current bill: Rs. " << total_bill << endl << endl;
+        }
+    }
+    return 0;
+}
