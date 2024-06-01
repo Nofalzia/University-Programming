@@ -1,0 +1,562 @@
+#include <iostream>
+#include <map>
+#include <iomanip>
+#include <string>
+#include <stack>
+#include <queue>
+using namespace std;
+
+// Node for doubly linked list
+struct Node {
+    int itemIndex;
+    int quantity;
+    Node* next;
+    Node* prev;
+
+    Node(int itemIndex, int quantity) : itemIndex(itemIndex), quantity(quantity), next(nullptr), prev(nullptr) {}
+};
+
+// Doubly linked list class
+class OrderList {
+public:
+    Node* head;
+    Node* tail;
+
+    OrderList() : head(nullptr), tail(nullptr) {}
+
+    void addItem(int itemIndex, int quantity) {
+        Node* newNode = new Node(itemIndex, quantity);
+        if (!head) {
+            head = tail = newNode;
+        }
+        else {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+    }
+
+    bool removeItem(int itemIndex, int quantity) {
+        Node* current = head;
+        while (current) {
+            if (current->itemIndex == itemIndex) {
+                if (current->quantity < quantity) {
+                    return false;
+                }
+                current->quantity -= quantity;
+                if (current->quantity == 0) {
+                    if (current->prev) {
+                        current->prev->next = current->next;
+                    }
+                    else {
+                        head = current->next;
+                    }
+                    if (current->next) {
+                        current->next->prev = current->prev;
+                    }
+                    else {
+                        tail = current->prev;
+                    }
+                    delete current;
+                }
+                return true;
+            }
+            current = current->next;
+        }
+        return false;
+    }
+
+    int calculateTotalBill(int prices[]) {
+        int totalBill = 0;
+        Node* current = head;
+        while (current) {
+            totalBill += current->quantity * prices[current->itemIndex];
+            current = current->next;
+        }
+        return totalBill;
+    }
+
+    void clear() {
+        Node* current = head;
+        while (current) {
+            Node* temp = current;
+            current = current->next;
+            delete temp;
+        }
+        head = tail = nullptr;
+    }
+
+    void sortByPrice(int prices[]) {
+        if (!head || !head->next) return;
+
+        bool swapped;
+        do {
+            swapped = false;
+            Node* current = head;
+            while (current && current->next) {
+                if (prices[current->itemIndex] > prices[current->next->itemIndex]) {
+                    swap(current->itemIndex, current->next->itemIndex);
+                    swap(current->quantity, current->next->quantity);
+                    swapped = true;
+                }
+                current = current->next;
+            }
+        } while (swapped);
+    }
+
+    void sortByName(string items[]) {
+        if (!head || !head->next) return;
+
+        bool swapped;
+        do {
+            swapped = false;
+            Node* current = head;
+            while (current && current->next) {
+                if (items[current->itemIndex] > items[current->next->itemIndex]) {
+                    swap(current->itemIndex, current->next->itemIndex);
+                    swap(current->quantity, current->next->quantity);
+                    swapped = true;
+                }
+                current = current->next;
+            }
+        } while (swapped);
+    }
+
+    void sortByQuantity() {
+        if (!head || !head->next) return;
+
+        bool swapped;
+        do {
+            swapped = false;
+            Node* current = head;
+            while (current && current->next) {
+                if (current->quantity > current->next->quantity) {
+                    swap(current->itemIndex, current->next->itemIndex);
+                    swap(current->quantity, current->next->quantity);
+                    swapped = true;
+                }
+                current = current->next;
+            }
+        } while (swapped);
+    }
+
+    ~OrderList() {
+        clear();
+    }
+};
+
+// Order action struct for undo/redo
+struct OrderAction {
+    enum ActionType { ADD, REMOVE } actionType;
+    int itemIndex;
+    int quantity;
+
+    OrderAction(ActionType actionType, int itemIndex, int quantity)
+        : actionType(actionType), itemIndex(itemIndex), quantity(quantity) {}
+};
+
+// Inventory class
+class Inventory {
+public:
+    Node* head;
+    Node* tail;
+
+    Inventory() : head(nullptr), tail(nullptr) {}
+
+    void addItem(int itemIndex, int quantity) {
+        Node* newNode = new Node(itemIndex, quantity);
+        if (!head) {
+            head = tail = newNode;
+        }
+        else {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+    }
+
+    bool updateItem(int itemIndex, int quantity) {
+        Node* current = head;
+        while (current) {
+            if (current->itemIndex == itemIndex) {
+                current->quantity -= quantity;
+                if (current->quantity < 0) {
+                    current->quantity += quantity;
+                    return false;
+                }
+                return true;
+            }
+            current = current->next;
+        }
+        return false;
+    }
+
+    void displayInventory(string items[]) {
+        Node* current = head;
+        cout << "Inventory:\n";
+        while (current) {
+            cout << items[current->itemIndex] << ": " << current->quantity << endl;
+            current = current->next;
+        }
+    }
+
+    ~Inventory() {
+        Node* current = head;
+        while (current) {
+            Node* temp = current;
+            current = current->next;
+            delete temp;
+        }
+    }
+};
+
+// Function prototypes
+void displayMenu();
+void addItem(OrderList& orderList, Inventory& inventory, string items[], int prices[], stack<OrderAction>& orderHistory, queue<OrderAction>& orderQueue);
+void removeItem(OrderList& orderList, Inventory& inventory, string items[], int prices[], stack<OrderAction>& orderHistory);
+void applyDiscount(int& totalBill);
+void undoLastAction(OrderList& orderList, string items[], int prices[], stack<OrderAction>& orderHistory, Inventory& inventory);
+void redoLastAction(OrderList& orderList, string items[], int prices[], stack<OrderAction>& orderHistory, stack<OrderAction>& redoStack, Inventory& inventory);
+void processOrderQueue(OrderList& orderList, Inventory& inventory, string items[], int prices[], queue<OrderAction>& orderQueue);
+
+int main() {
+    int choice = 0;
+    bool keep_ordering = true;
+    int prices[5] = { 200, 120, 250, 170, 50 };
+    string items[5] = { "Biryani", "Sandwich", "Brownie", "Chicken Roll", "Chai" };
+    int totalBill = 0;
+
+    OrderList orderList;
+    Inventory inventory;
+    stack<OrderAction> orderHistory;
+    stack<OrderAction> redoStack;
+    queue<OrderAction> orderQueue;
+
+    // Initial inventory setup
+    for (int i = 0; i < 5; ++i) {
+        inventory.addItem(i, 50); // Add 50 of each item to inventory
+    }
+
+    while (keep_ordering) {
+        displayMenu();
+        cin >> choice;
+        cout << endl;
+
+        switch (choice) {
+        case 1:  // Add item
+            addItem(orderList, inventory, items, prices, orderHistory, orderQueue);
+            break;
+
+        case 2:  // Remove item
+            removeItem(orderList, inventory, items, prices, orderHistory);
+            break;
+
+        case 3:  // Apply discount
+            totalBill = orderList.calculateTotalBill(prices);
+            applyDiscount(totalBill);
+            break;
+
+        case 4:  // Undo last action
+            undoLastAction(orderList, items, prices, orderHistory, inventory);
+            break;
+
+        case 5:  // Redo last action
+            redoLastAction(orderList, items, prices, orderHistory, redoStack, inventory);
+            break;
+
+        case 6:  // Process order queue
+            processOrderQueue(orderList, inventory, items, prices, orderQueue);
+            break;
+
+        case 7:  // Sort orders by price
+            orderList.sortByPrice(prices);
+            break;
+
+        case 8:  // Sort orders by name
+            orderList.sortByName(items);
+            break;
+
+        case 9:  // Sort orders by quantity
+            orderList.sortByQuantity();
+            break;
+
+        case 10: // Display inventory
+            inventory.displayInventory(items);
+            break;
+
+        case 0:  // Complete order
+            totalBill = orderList.calculateTotalBill(prices);
+            cout << endl << "Your total bill is Rs. " << totalBill << "/- Thank you for visiting our cafe." << endl;
+            keep_ordering = false;
+            break;
+
+        default:
+            cout << "Invalid choice. Please try again." << endl;
+            break;
+        }
+
+        if (keep_ordering) {
+            totalBill = orderList.calculateTotalBill(prices);
+            cout << endl << "Your current bill: Rs. " << totalBill << "/-" << endl << endl;
+        }
+    }
+
+    return 0;
+}
+
+// Function definitions
+
+void displayMenu() {
+
+
+    //horizontal top bar
+    cout << "   " << '\xDA';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xBF' << "   " << endl;
+    //end of top bar
+    cout << "   " << '\xB3' << "      PLEASE SELECT AN OPTION      " << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << "       AND THEN PRESS ENTER        " << '\xB3' << "   " << endl;
+    //horizontal bottom bar
+    cout << "   " << '\xC3';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xB4' << "   " << endl;
+    //end of bottom bar
+    //horizontal top bar
+    cout << "   " << '\xDA';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xBF' << "   " << endl;
+    //end of top bar
+    cout << "   " << '\xB3' << "           MR. DEAN'S CAFE         " << '\xB3' << "   " << endl;
+
+    //horizontal bottom bar
+    cout << "   " << '\xC3';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xB4' << "   " << endl;
+    //end of bottom bar
+
+    cout << "   " << '\xB3' << "    1 >> ADD ITEM                  " << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << "    2 >> REMOVE ITEM               " << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << "    3 >> APPLY DISCOUNT            " << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << "    0 >> COMPLETE ORDER            " << '\xB3' << "   " << endl;
+    //horizontal bottom bar
+    cout << "   " << '\xC0';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xD9' << "   " << endl << endl << endl;
+    //horizontal top bar
+    cout << "   " << '\xDA';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; } // Top border
+    cout << "\xBF   " << endl;
+    // Title line
+    cout << "   " << '\xB3' << "        - MORE FEATURES -    " << setw(7) << '\xB3' << "   " << endl;
+    
+    //horizontal bar
+    cout << "   " << '\xDA';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; }
+    cout << '\xBF' << "   " << endl;
+    
+    // Menu options
+    cout << "   " << '\xB3' << " 4. Undo Last Action" << setw(16) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 5. Redo Last Action" << setw(16) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 6. Process Order Queue" << setw(13) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 7. Sort Orders by Price" << setw(12) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 8. Sort Orders by Name" << setw(13) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 9. Sort Orders by Quantity" << setw(9) << '\xB3' << "   " << endl;
+    cout << "   " << '\xB3' << " 10. Display Inventory" << setw(14) << '\xB3' << "   " << endl;
+    // Bottom border
+    cout << "   " << '\xC0';
+    for (int i = 0; i < 35; ++i) { cout << '\xC4'; } // Bottom border
+    cout << "\xD9   " << endl;
+    // Prompt for user input
+    cout << endl << "   Enter your choice: ";
+
+
+
+
+    //cout << "   \xDA";
+    //for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Top border
+    //cout << "\xBF   " << endl;
+    //cout << "   " << '\xB3' << " Welcome to the cafe. Please select an option: " << setw(12) << '\xB3' << "   " << endl; // Title line
+    //cout << "   " << '\xB3' << " 1. Add Item" << setw(47) << '\xB3' << "   " << endl; // Menu options
+    //cout << "   " << '\xB3' << " 2. Remove Item" << setw(44) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 3. Apply Discount" << setw(41) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 0. Complete Order" << setw(42) << '\xB3' << "   " << endl;
+    //for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Bottom border
+
+    //cout << endl << "   \xDA";
+    //for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Top border
+    //cout << "\xBF   " << endl;
+    //cout << "   " << '\xB3' << " More Features " << setw(12) << '\xB3' << "   " << endl; // Title line
+    //cout << "   " << '\xB3' << " 4. Undo Last Action" << setw(39) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 5. Redo Last Action" << setw(39) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 6. Process Order Queue" << setw(37) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 7. Sort Orders by Price" << setw(37) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 8. Sort Orders by Name" << setw(38) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 9. Sort Orders by Quantity" << setw(34) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xB3' << " 10. Display Inventory" << setw(36) << '\xB3' << "   " << endl;
+    //cout << "   " << '\xC0';
+    //for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Bottom border
+    //cout << "\xD9   " << endl;
+    //cout << "Enter your choice: ";
+}
+
+void addItem(OrderList& orderList, Inventory& inventory, string items[], int prices[], stack<OrderAction>& orderHistory, queue<OrderAction>& orderQueue) {
+    int choice = 0;
+    int quantity = 0;
+
+    do {
+        cout << "   \xDA";
+        for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Increase the length of the top line
+        cout << "\xBF   " << endl;
+        cout << "   " << '\xB3' << " " << '\xB3' << "           Select Your Order             " << '\xB3' << " " << '\xB3' << "   " << endl; // Adjust the spacing
+        cout << "   " << '\xB3' << " " << '\xB3';
+        for (int i = 0; i < 41; ++i) { cout << '\xC4'; } // Increase the length of the middle line
+        cout << '\xB3' << " " << '\xB3' << "   " << endl;
+        for (int i = 0; i < 5; ++i) {
+            cout << "   " << '\xB3' << " " << '\xB3' << "    " << i + 1 << ". " << items[i] << setw(27 - items[i].size()) << prices[i] << " /-    " << '\xB3' << " " << '\xB3' << "   " << endl; // Adjust the spacing
+        }
+        cout << "   " << '\xB3' << " " << '\xB3' << "    0. Exit                              " << '\xB3' << " " << '\xB3' << "   " << endl;
+        cout << "   \xC0";
+        for (int i = 0; i < 45; ++i) { cout << '\xC4'; } // Increase the length of the bottom line
+        cout << "\xD9   " << endl;
+        cout << endl << endl;
+
+        cin >> choice;
+
+        if (choice >= 1 && choice <= 5) {
+            cout << "How many plates of " << items[choice - 1] << " (" << prices[choice - 1] << "/- per plate) you want? ";
+            cin >> quantity;
+
+            if (inventory.updateItem(choice - 1, quantity)) {
+                orderList.addItem(choice - 1, quantity);
+                orderHistory.push(OrderAction(OrderAction::ADD, choice - 1, quantity));
+                orderQueue.push(OrderAction(OrderAction::ADD, choice - 1, quantity));
+                cout << quantity << " plates of " << items[choice - 1] << " added to your order.\n";
+            }
+            else {
+                cout << "Not enough inventory for " << items[choice - 1] << ".\n";
+            }
+        }
+        else if (choice != 0) {
+            cout << "Invalid choice, please try again.\n";
+        }
+    } while (choice != 0);
+}
+
+void removeItem(OrderList& orderList, Inventory& inventory, string items[], int prices[], stack<OrderAction>& orderHistory) {
+    int remove_choice = 0;
+    cout << "Select the item you want to remove:\n";
+    for (int i = 0; i < 5; ++i) {
+        cout << i + 1 << ". " << items[i] << endl;
+    }
+    cout << "0. Exit\n";
+
+    cin >> remove_choice;
+
+    if (remove_choice >= 1 && remove_choice <= 5) {
+        int quantity;
+        cout << "How many plates of " << items[remove_choice - 1] << " do you want to remove? ";
+        cin >> quantity;
+        if (orderList.removeItem(remove_choice - 1, quantity)) {
+            inventory.updateItem(remove_choice - 1, -quantity); // Add back to inventory
+            orderHistory.push(OrderAction(OrderAction::REMOVE, remove_choice - 1, quantity));
+            cout << quantity << " plates of " << items[remove_choice - 1] << " removed.\n";
+        }
+        else {
+            cout << "You cannot remove more than you ordered.\n";
+        }
+    }
+    else {
+        cout << "Invalid choice, please try again.\n";
+    }
+}
+
+void applyDiscount(int& totalBill) {
+    string discounts[3] = { "quaid123", "sirSyed", "mufaid" };
+    bool is_code_valid = false;
+    string discount;
+    cout << "Please Enter a Discount Code or Press 0 to go back: ";
+    cin >> discount;
+    if (discount == "0") {
+        return;
+    }
+
+    for (const string& code : discounts) {
+        if (discount == code) {
+            is_code_valid = true;
+            break;
+        }
+    }
+
+    if (is_code_valid) {
+        int temp = totalBill;
+        totalBill = totalBill - totalBill * 20 / 100;
+        cout << "Your cost is now 20% less";
+        cout << endl << "Original bill =======> " << temp;
+        cout << endl << "Bill after discount => " << totalBill << endl;
+    }
+    else {
+        cout << "Invalid code\n";
+    }
+}
+
+void undoLastAction(OrderList& orderList, string items[], int prices[], stack<OrderAction>& orderHistory, Inventory& inventory) {
+    if (orderHistory.empty()) {
+        cout << "No actions to undo.\n";
+        return;
+    }
+
+    OrderAction lastAction = orderHistory.top();
+    orderHistory.pop();
+
+    if (lastAction.actionType == OrderAction::ADD) {
+        orderList.removeItem(lastAction.itemIndex, lastAction.quantity);
+        inventory.updateItem(lastAction.itemIndex, -lastAction.quantity); // Add back to inventory
+        cout << "Undid addition of " << lastAction.quantity << " plates of " << items[lastAction.itemIndex] << ".\n";
+    }
+    else if (lastAction.actionType == OrderAction::REMOVE) {
+        orderList.addItem(lastAction.itemIndex, lastAction.quantity);
+        inventory.updateItem(lastAction.itemIndex, lastAction.quantity); // Remove from inventory
+        cout << "Undid removal of " << lastAction.quantity << " plates of " << items[lastAction.itemIndex] << ".\n";
+    }
+}
+
+void redoLastAction(OrderList& orderList, string items[], int prices[], stack<OrderAction>& orderHistory, stack<OrderAction>& redoStack, Inventory& inventory) {
+    if (redoStack.empty()) {
+        cout << "No actions to redo.\n";
+        return;
+    }
+
+    OrderAction lastUndoAction = redoStack.top();
+    redoStack.pop();
+
+    if (lastUndoAction.actionType == OrderAction::ADD) {
+        orderList.addItem(lastUndoAction.itemIndex, lastUndoAction.quantity);
+        inventory.updateItem(lastUndoAction.itemIndex, lastUndoAction.quantity); // Remove from inventory
+        orderHistory.push(lastUndoAction);
+        cout << "Redid addition of " << lastUndoAction.quantity << " plates of " << items[lastUndoAction.itemIndex] << ".\n";
+    }
+    else if (lastUndoAction.actionType == OrderAction::REMOVE) {
+        orderList.removeItem(lastUndoAction.itemIndex, lastUndoAction.quantity);
+        inventory.updateItem(lastUndoAction.itemIndex, -lastUndoAction.quantity); // Add back to inventory
+        orderHistory.push(lastUndoAction);
+        cout << "Redid removal of " << lastUndoAction.quantity << " plates of " << items[lastUndoAction.itemIndex] << ".\n";
+    }
+}
+
+void processOrderQueue(OrderList& orderList, Inventory& inventory, string items[], int prices[], queue<OrderAction>& orderQueue) {
+    cout << "Processing order queue...\n";
+    while (!orderQueue.empty()) {
+        OrderAction action = orderQueue.front();
+        orderQueue.pop();
+
+        if (action.actionType == OrderAction::ADD) {
+            if (inventory.updateItem(action.itemIndex, action.quantity)) {
+                orderList.addItem(action.itemIndex, action.quantity);
+                cout << "Processed addition of " << action.quantity << " plates of " << items[action.itemIndex] << ".\n";
+            }
+            else {
+                cout << "Not enough inventory to process addition of " << action.quantity << " plates of " << items[action.itemIndex] << ".\n";
+            }
+        }
+    }
+}
